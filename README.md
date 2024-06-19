@@ -1,2 +1,6 @@
 # react-redux
-Spyfall with React-Redux
+Spyfall
+# Tech stack
+- React
+- Redux tool kit
+- Websocket
