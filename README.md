@@ -1,2 +1,2 @@
 # react-redux
-Todo List with React-Redux
+Spyfall with React-Redux
