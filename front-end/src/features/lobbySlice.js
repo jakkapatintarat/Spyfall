@@ -3,6 +3,8 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
     players: [],
     host: null,
+    room: null,
+    error: null,
 };
 
 const lobbySlice = createSlice({
@@ -18,8 +20,14 @@ const lobbySlice = createSlice({
         setHost: (state, action) => {
             state.host = action.payload;
         },
+        setRoom: (state, action) => {
+            state.room = action.payload;
+        },
+        setError: (state, action) => {
+            state.error = action.payload;
+        },
     }
 });
 
-export const { addPlayer, removePlayer, setHost } = lobbySlice.actions;
+export const { addPlayer, removePlayer, setHost, setRoom, setError } = lobbySlice.actions;
 export default lobbySlice.reducer;

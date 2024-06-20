@@ -14,8 +14,33 @@ const io = new socketIo.Server(server, {
     }
 });
 
+const rooms = {};
+
 io.on('connection', (socket) => {
     console.log('New client connected');
+
+    socket.on('createRoom', (roomName) => {
+        if (!rooms[roomName]) {
+            rooms[roomName] = [];
+            socket.join(roomName);
+            rooms[roomName].push(socket.id);
+            socket.emit('roomCreated', roomName);
+            console.log(`Room ${roomName} created`);
+        } else {
+            socket.emit('error', 'Room already exist');
+        }
+    });
+
+    socket.on('joinRoom', (roomName) => {
+        if (rooms[roomName]) {
+            socket.join(roomName);
+            rooms[roomName].push(socket.id);
+            socket.emit('roomJoined', roomName);
+            console.log(`Client joined room ${roomName}`);
+        } else {
+            socket.emit('error', 'Room not exist');
+        }
+    })
 
     socket.on('disconect', () => {
         console.log('Client disconnected');
