@@ -11,6 +11,9 @@ const lobbySlice = createSlice({
     name: 'lobby',
     initialState,
     reducers: {
+        setPlayer: (state, action) => {
+            state.players = action.payload;
+        },
         addPlayer: (state, action) => {
             state.players.push(action.payload);
         },
@@ -21,7 +24,8 @@ const lobbySlice = createSlice({
             state.host = action.payload;
         },
         setRoom: (state, action) => {
-            state.room = action.payload;
+            state.roomName = action.payload.roomName;
+            state.playerName = action.payload.playerName;
         },
         setError: (state, action) => {
             state.error = action.payload;
@@ -29,5 +33,5 @@ const lobbySlice = createSlice({
     }
 });
 
-export const { addPlayer, removePlayer, setHost, setRoom, setError } = lobbySlice.actions;
+export const { addPlayer, removePlayer, setHost, setRoom, setError, setPlayer } = lobbySlice.actions;
 export default lobbySlice.reducer;

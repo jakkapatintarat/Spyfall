@@ -19,24 +19,28 @@ const rooms = {};
 io.on('connection', (socket) => {
     console.log('New client connected');
 
-    socket.on('createRoom', (roomName) => {
-        if (!rooms[roomName]) {
-            rooms[roomName] = [];
-            socket.join(roomName);
-            rooms[roomName].push(socket.id);
-            socket.emit('roomCreated', roomName);
+    socket.on('createRoom', (data) => {
+        const { roomName, playerName } = data;
+        if (!rooms[roomName]) { // ตรวจสอบว่าห้อง roomName ยังไม่ถูกสร้าง
+            rooms[roomName] = []; // สร้างห้องใหม่โดยเพิ่มชื่อลงใน object 'roooms'
+            socket.join(roomName); // ให้ join ห้องที่ชื่อ roomName
+            rooms[roomName].push({ id: socket.id, name: playerName }); // เพิ่มผู้เล่นเข้าไปในห้อง
+            socket.emit('roomCreated', { roomName, playerName }); // ส่งกลับไป client ที่เรียกใช้งานว่าห้องถูกสร้างแล้ว
             console.log(`Room ${roomName} created`);
+            console.log(rooms);
         } else {
             socket.emit('error', 'Room already exist');
         }
     });
 
-    socket.on('joinRoom', (roomName) => {
+    socket.on('joinRoom', (data) => {
+        const { roomName, playerName } = data;
         if (rooms[roomName]) {
             socket.join(roomName);
-            rooms[roomName].push(socket.id);
-            socket.emit('roomJoined', roomName);
-            console.log(`Client joined room ${roomName}`);
+            rooms[roomName].push({ id: socket.id, name: playerName });
+            io.in(roomName).emit('updatePlayers', rooms[roomName]); // ส่งข้อมูลเกี่ยวกับผู้เล่นในห้องไปยังทุกคนที่อยู่ในห้อง
+            console.log(`${playerName} joined room: ${roomName}`);
+            console.log(rooms);
         } else {
             socket.emit('error', 'Room not exist');
         }
