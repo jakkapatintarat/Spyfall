@@ -1,55 +1,59 @@
 const express = require('express');
 const http = require('http');
-const socketIo = require('socket.io');
+const { Server } = require('socket.io');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
-
 const server = http.createServer(app);
-const io = new socketIo.Server(server, {
+const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"],
+        origin: 'http://localhost:3000',
+        methods: ['GET', 'POST'],
     }
 });
 
-const rooms = {};
+app.use(cors());
+
+let rooms = {} //เก็บข้อมูลห้องทั้งหมด
 
 io.on('connection', (socket) => {
-    console.log('New client connected');
-
+    console.log('a user connected', socket.id);
+    // สร้างห้อง
     socket.on('createRoom', (data) => {
-        const { roomName, playerName } = data;
-        if (!rooms[roomName]) { // ตรวจสอบว่าห้อง roomName ยังไม่ถูกสร้าง
-            rooms[roomName] = []; // สร้างห้องใหม่โดยเพิ่มชื่อลงใน object 'roooms'
-            socket.join(roomName); // ให้ join ห้องที่ชื่อ roomName
-            rooms[roomName].push({ id: socket.id, name: playerName }); // เพิ่มผู้เล่นเข้าไปในห้อง
-            socket.emit('roomCreated', { roomName, playerName }); // ส่งกลับไป client ที่เรียกใช้งานว่าห้องถูกสร้างแล้ว
-            console.log(`Room ${roomName} created`);
-            console.log(rooms);
-        } else {
-            socket.emit('error', 'Room already exist');
-        }
-    });
-
-    socket.on('joinRoom', (data) => {
-        const { roomName, playerName } = data;
-        if (rooms[roomName]) {
+        const { roomName, userName } = data
+        if (!rooms[roomName]) {
+            rooms[roomName] = {
+                users: [{ id: socket.id, user: userName }]
+            };
             socket.join(roomName);
-            rooms[roomName].push({ id: socket.id, name: playerName });
-            io.in(roomName).emit('updatePlayers', rooms[roomName]); // ส่งข้อมูลเกี่ยวกับผู้เล่นในห้องไปยังทุกคนที่อยู่ในห้อง
-            console.log(`${playerName} joined room: ${roomName}`);
-            console.log(rooms);
+            io.to(roomName).emit('userJoined', rooms[roomName].users);
+            io.to(socket.id).emit('roomCreated', roomName);
+            // console.log(`room created: ${JSON.stringify(roomName)}`);
         } else {
-            socket.emit('error', 'Room not exist');
+            io.to(socket.id).emit('error', 'Room already exists');
         }
     })
 
-    socket.on('disconect', () => {
-        console.log('Client disconnected');
-    });
-});
+    //เข้าร่วมห้อง
+    socket.on('joinRoom', (roomName, userName) => {
+        if (rooms[roomName]) {
+            rooms[roomName].users.push({ id: socket.id, name: userName });
+            socket.join(roomName);
+            io.to(roomName).emit('userJoined', rooms[roomName].users);
+            io.to(socket.id).emit('roomJoined', rooms[roomName].users);
+            console.log(`user joined to room${roomName}: ${JSON.stringify(rooms[roomName])}`);
+        } else {
+            io.to(socket.id).emit('error', 'Room does not exist');
+        }
+    })
 
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+    // ตัดการเชื่อมต่อ
+    socket.on('disconnect', () => {
+        console.log('a user disconnected', socket.id);
+    })
+})
+
+const PORT = 5000;
+server.listen(PORT, () => {
+    console.log(`server is running on port ${PORT}`);
+})

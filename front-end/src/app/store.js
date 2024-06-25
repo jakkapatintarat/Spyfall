@@ -1,10 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
-import gameReducer from '../features/gameSlice';
-import lobbyReducer from '../features/lobbySlice';
+import roomReducer from '../features/room/roomSlice';
 
 export const store = configureStore({
     reducer: {
-        game: gameReducer,
-        lobby: lobbyReducer,
+        room: roomReducer,
     }
 })
